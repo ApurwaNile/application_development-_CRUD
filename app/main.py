@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
@@ -9,7 +10,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.database.db import SessionLocal, init_db
 from app.models import ReminderLog, TaskItem, TaskStage, User  # noqa: F401
 from app.routers import auth
-from app.routers.auth import ensure_default_user
+from app.routers.auth import ensure_default_user, require_login
 
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
@@ -45,6 +46,9 @@ async def home(request: Request):
 
 @app.get("/dashboard")
 async def dashboard(request: Request):
+    auth_result = require_login(request)
+    if isinstance(auth_result, RedirectResponse):
+        return auth_result
     return templates.TemplateResponse(
         request=request,
         name="dashboard.html",

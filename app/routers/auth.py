@@ -31,6 +31,13 @@ def get_db():
         db.close()
 
 
+def require_login(request: Request) -> int | RedirectResponse:
+    user_id = request.session.get("user_id")
+    if user_id is None:
+        return RedirectResponse(url="/auth/login", status_code=303)
+    return user_id
+
+
 def ensure_default_user(db: Session) -> None:
     user_count = db.scalar(select(User).limit(1))
     if user_count is None:
