@@ -16,34 +16,49 @@ router = APIRouter(prefix="/tasks", tags=["tasks"])
 BASE_DIR = Path(__file__).resolve().parent.parent
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
-
 @router.get("")
 async def list_tasks(
     request: Request,
     edit: int | None = None,
+    search: int | None = None,
     db: Session = Depends(get_db),
 ):
     auth_result = require_login(request)
     if isinstance(auth_result, RedirectResponse):
         return auth_result
 
-    tasks = db.scalars(
+    query = (
         select(TaskItem)
         .options(joinedload(TaskItem.assignee))
-        .order_by(TaskItem.id)
+    )
+
+    if search is not None:
+        query = query.where(TaskItem.id == search)
+
+    tasks = db.scalars(
+        query.order_by(TaskItem.id)
     ).unique().all()
-    users = db.scalars(select(User).order_by(User.username)).all()
+
+    users = db.scalars(
+        select(User).order_by(User.username)
+    ).all()
 
     edit_task = None
+
     if edit is not None:
-        edit_task = db.scalar(select(TaskItem).where(TaskItem.id == edit))
+        edit_task = db.scalar(
+            select(TaskItem).where(TaskItem.id == edit)
+        )
 
     return templates.TemplateResponse(
         request=request,
         name="task_form.html",
-        context={"tasks": tasks, "users": users, "edit_task": edit_task},
+        context={
+            "tasks": tasks,
+            "users": users,
+            "edit_task": edit_task,
+        },
     )
-
 
 @router.post("")
 async def create_task(
@@ -66,11 +81,11 @@ async def create_task(
         due_date=date.fromisoformat(due_date),
         status=status,
     )
+
     db.add(task)
     db.commit()
 
     return RedirectResponse(url="/tasks", status_code=303)
-
 
 @router.post("/{task_id}/update")
 async def update_task(
