@@ -30,48 +30,87 @@
         <div class="card mb-4">
             <div class="card-body">
         
-                <h5>Add Stage</h5>
-        
-                <form method="post" action="/tasks/{{ task.id }}/stages">
+                {% if edit_stage %}
+
+                <h5>Edit Stage</h5>
+                
+                <form
+                    method="post"
+                    action="/tasks/{{ task.id }}/stages/{{ edit_stage.id }}/update"
+                >
+                
+                {% else %}
+                
+                {% if edit_stage %}
+<h5>Edit Stage #{{ edit_stage.id }}</h5>
+{% else %}
+<h5>Add Stage</h5>
+{% endif %}
+                
+                <form
+                    method="post"
+                    action="/tasks/{{ task.id }}/stages"
+                >
+                
+                {% endif %}
         
                     <div class="row g-3">
         
                         <div class="col-md-4">
                             <label class="form-label">Stage Name</label>
                             <input
-                                type="text"
-                                name="stage_name"
-                                class="form-control"
-                                required
-                            >
+                            type="text"
+                            name="stage_name"
+                            class="form-control"
+                            value="{{ edit_stage.stage_name if edit_stage else '' }}"
+                            required
+                        >
                         </div>
         
                         <div class="col-md-4">
                             <label class="form-label">Stage Status</label>
                             <input
-                                type="text"
-                                name="stage_status"
-                                class="form-control"
-                                required
-                            >
+                            type="text"
+                            name="stage_status"
+                            class="form-control"
+                            value="{{ edit_stage.stage_status if edit_stage else '' }}"
+                            required
+                        >
                         </div>
         
                         <div class="col-md-4">
                             <label class="form-label">Status</label>
                             <input
-                                type="text"
-                                name="status"
-                                class="form-control"
-                                required
-                            >
+                            type="text"
+                            name="status"
+                            class="form-control"
+                            value="{{ edit_stage.status if edit_stage else '' }}"
+                            required
+                        >
                         </div>
         
                         <div class="col-md-12">
+                            {% if edit_stage %}
+                            <button
+                                type="submit"
+                                class="btn btn-primary">
+                                Update Stage
+                            </button>
+                            
+                            <a href="/tasks/{{ task.id }}/stages"
+                               class="btn btn-secondary">
+                                Cancel
+                            </a>
+                            
+                            {% else %}
+                            
                             <button
                                 type="submit"
                                 class="btn btn-success">
                                 Add Stage
                             </button>
+                            
+                            {% endif %}
                         </div>
         
                     </div>
@@ -89,6 +128,7 @@
                     <th>Stage Status</th>
                     <th>Last Updated</th>
                     <th>Status</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
 
@@ -103,6 +143,27 @@
                         <td>{{ stage.stage_status }}</td>
                         <td>{{ stage.last_updated_date }}</td>
                         <td>{{ stage.status }}</td>
+
+                        <td class="d-flex gap-2">
+                        
+                            <a href="/tasks/{{ task.id }}/stages?edit={{ stage.id }}"
+                               class="btn btn-sm btn-outline-primary">
+                                Edit
+                            </a>
+                        
+                            <form
+                                method="post"
+                                action="/tasks/{{ task.id }}/stages/{{ stage.id }}/delete"
+                                onsubmit="return confirm('Delete this stage?');"
+                            >
+                                <button
+                                    type="submit"
+                                    class="btn btn-sm btn-outline-danger">
+                                    Delete
+                                </button>
+                            </form>
+                        
+                        </td>
                     </tr>
                     {% endfor %}
 

@@ -138,6 +138,7 @@ async def delete_task(
 async def view_stages(
     request: Request,
     task_id: int,
+    edit: int | None = None,
     db: Session = Depends(get_db),
 ):
     auth_result = require_login(request)
@@ -157,12 +158,20 @@ async def view_stages(
         .order_by(TaskStage.id)
     ).all()
 
+    edit_stage = None
+
+    if edit is not None:
+        edit_stage = db.scalar(
+            select(TaskStage).where(TaskStage.id == edit)
+        )
+
     return templates.TemplateResponse(
         request=request,
         name="stage_form.html",
         context={
             "task": task,
             "stages": stages,
+            "edit_stage": edit_stage,
         },
     )
 
@@ -189,6 +198,66 @@ async def create_stage(
 
     db.add(stage)
     db.commit()
+
+    return RedirectResponse(
+        url=f"/tasks/{task_id}/stages",
+        status_code=303,
+    )
+
+@router.post("/{task_id}/stages/{stage_id}/update")
+async def update_stage(
+    request: Request,
+    task_id: int,
+    stage_id: int,
+    stage_name: str = Form(...),
+    stage_status: str = Form(...),
+    status: str = Form(...),
+    db: Session = Depends(get_db),
+):
+    auth_result = require_login(request)
+    if isinstance(auth_result, RedirectResponse):
+        return auth_result
+
+    stage = db.scalar(
+        select(TaskStage).where(TaskStage.id == stage_id)
+    )
+
+    if stage is None:
+        return RedirectResponse(
+            url=f"/tasks/{task_id}/stages",
+            status_code=303,
+        )
+
+    stage.stage_name = stage_name
+    stage.stage_status = stage_status
+    stage.status = status
+    stage.last_updated_date = datetime.now()
+
+    db.commit()
+
+    return RedirectResponse(
+        url=f"/tasks/{task_id}/stages",
+        status_code=303,
+    )
+
+@router.post("/{task_id}/stages/{stage_id}/delete")
+async def delete_stage(
+    request: Request,
+    task_id: int,
+    stage_id: int,
+    db: Session = Depends(get_db),
+):
+    auth_result = require_login(request)
+    if isinstance(auth_result, RedirectResponse):
+        return auth_result
+
+    stage = db.scalar(
+        select(TaskStage).where(TaskStage.id == stage_id)
+    )
+
+    if stage:
+        db.delete(stage)
+        db.commit()
 
     return RedirectResponse(
         url=f"/tasks/{task_id}/stages",
