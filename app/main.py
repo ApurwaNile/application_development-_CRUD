@@ -9,7 +9,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.database.db import SessionLocal, init_db
 from app.models import ReminderLog, TaskItem, TaskStage, User  # noqa: F401
-from app.routers import auth
+from app.routers import auth, tasks
 from app.routers.auth import ensure_default_user, require_login
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -31,6 +31,7 @@ app = FastAPI(title="AI Task Manager", lifespan=lifespan)
 
 app.add_middleware(SessionMiddleware, secret_key="ai-task-manager-secret-key")
 app.include_router(auth.router)
+app.include_router(tasks.router)
 
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
