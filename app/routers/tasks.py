@@ -18,7 +18,11 @@ templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
 
 @router.get("")
-async def list_tasks(request: Request, db: Session = Depends(get_db)):
+async def list_tasks(
+    request: Request,
+    edit: int | None = None,
+    db: Session = Depends(get_db),
+):
     auth_result = require_login(request)
     if isinstance(auth_result, RedirectResponse):
         return auth_result
@@ -30,10 +34,14 @@ async def list_tasks(request: Request, db: Session = Depends(get_db)):
     ).unique().all()
     users = db.scalars(select(User).order_by(User.username)).all()
 
+    edit_task = None
+    if edit is not None:
+        edit_task = db.scalar(select(TaskItem).where(TaskItem.id == edit))
+
     return templates.TemplateResponse(
         request=request,
         name="task_form.html",
-        context={"tasks": tasks, "users": users},
+        context={"tasks": tasks, "users": users, "edit_task": edit_task},
     )
 
 
@@ -59,6 +67,35 @@ async def create_task(
         status=status,
     )
     db.add(task)
+    db.commit()
+
+    return RedirectResponse(url="/tasks", status_code=303)
+
+
+@router.post("/{task_id}/update")
+async def update_task(
+    request: Request,
+    task_id: int,
+    lesson_id: int = Form(...),
+    assigned_to: str = Form(""),
+    start_date: str = Form(...),
+    due_date: str = Form(...),
+    status: str = Form(...),
+    db: Session = Depends(get_db),
+):
+    auth_result = require_login(request)
+    if isinstance(auth_result, RedirectResponse):
+        return auth_result
+
+    task = db.scalar(select(TaskItem).where(TaskItem.id == task_id))
+    if task is None:
+        return RedirectResponse(url="/tasks", status_code=303)
+
+    task.lesson_id = lesson_id
+    task.assigned_to = int(assigned_to) if assigned_to else None
+    task.start_date = date.fromisoformat(start_date)
+    task.due_date = date.fromisoformat(due_date)
+    task.status = status
     db.commit()
 
     return RedirectResponse(url="/tasks", status_code=303)
