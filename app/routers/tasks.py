@@ -99,3 +99,21 @@ async def update_task(
     db.commit()
 
     return RedirectResponse(url="/tasks", status_code=303)
+
+@router.post("/{task_id}/delete")
+async def delete_task(
+    request: Request,
+    task_id: int,
+    db: Session = Depends(get_db),
+):
+    auth_result = require_login(request)
+    if isinstance(auth_result, RedirectResponse):
+        return auth_result
+
+    task = db.scalar(select(TaskItem).where(TaskItem.id == task_id))
+
+    if task is not None:
+        db.delete(task)
+        db.commit()
+
+    return RedirectResponse(url="/tasks", status_code=303)
