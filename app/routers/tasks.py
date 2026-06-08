@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date ,datetime
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, Form, Request
@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.models.task import TaskItem
 from app.models.user import User
 from app.routers.auth import get_db, require_login
+from app.models.stage import TaskStage
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -132,3 +133,64 @@ async def delete_task(
         db.commit()
 
     return RedirectResponse(url="/tasks", status_code=303)
+
+@router.get("/{task_id}/stages")
+async def view_stages(
+    request: Request,
+    task_id: int,
+    db: Session = Depends(get_db),
+):
+    auth_result = require_login(request)
+    if isinstance(auth_result, RedirectResponse):
+        return auth_result
+
+    task = db.scalar(
+        select(TaskItem).where(TaskItem.id == task_id)
+    )
+
+    if task is None:
+        return RedirectResponse(url="/tasks", status_code=303)
+
+    stages = db.scalars(
+        select(TaskStage)
+        .where(TaskStage.task_item_id == task_id)
+        .order_by(TaskStage.id)
+    ).all()
+
+    return templates.TemplateResponse(
+        request=request,
+        name="stage_form.html",
+        context={
+            "task": task,
+            "stages": stages,
+        },
+    )
+
+@router.post("/{task_id}/stages")
+async def create_stage(
+    request: Request,
+    task_id: int,
+    stage_name: str = Form(...),
+    stage_status: str = Form(...),
+    status: str = Form(...),
+    db: Session = Depends(get_db),
+):
+    auth_result = require_login(request)
+    if isinstance(auth_result, RedirectResponse):
+        return auth_result
+
+    stage = TaskStage(
+        task_item_id=task_id,
+        stage_name=stage_name,
+        stage_status=stage_status,
+        last_updated_date=datetime.now(),
+        status=status,
+    )
+
+    db.add(stage)
+    db.commit()
+
+    return RedirectResponse(
+        url=f"/tasks/{task_id}/stages",
+        status_code=303,
+    )

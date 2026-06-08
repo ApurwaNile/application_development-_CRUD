@@ -197,7 +197,11 @@
                                class="btn btn-sm btn-outline-primary">
                                 Edit
                             </a>
-                        
+                        </button>
+                        <a href="/tasks/{{ task.id }}/stages"
+class="btn btn-sm btn-outline-success">
+Stages
+</a>
                             <form
                                 method="post"
                                 action="/tasks/{{ task.id }}/delete"
@@ -207,7 +211,7 @@
                                     type="submit"
                                     class="btn btn-sm btn-outline-danger">
                                     Delete
-                                </button>
+                                
                             </form>
                         </td>
                     </tr>
