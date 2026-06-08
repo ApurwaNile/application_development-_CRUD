@@ -6,11 +6,12 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
-
+from app.routers import reminders
 from app.database.db import SessionLocal, init_db
 from app.models import ReminderLog, TaskItem, TaskStage, User  # noqa: F401
 from app.routers import auth, tasks
 from app.routers.auth import ensure_default_user, require_login
+from app.routers import reports
 
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
@@ -32,7 +33,8 @@ app = FastAPI(title="AI Task Manager", lifespan=lifespan)
 app.add_middleware(SessionMiddleware, secret_key="ai-task-manager-secret-key")
 app.include_router(auth.router)
 app.include_router(tasks.router)
-
+app.include_router(reports.router)
+app.include_router(reminders.router)
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
 

@@ -78,3 +78,11 @@ async def login(
         name="login.html",
         context={"error": "Invalid Login"},
     )
+
+@router.get("/logout")
+async def logout(request: Request):
+    request.session.clear()
+    return RedirectResponse(
+        url="/auth/login",
+        status_code=303,
+    )

@@ -9,8 +9,37 @@
 </head>
 <body>
     <div class="container mt-5">
-        <h1>Reports</h1>
-        <p class="text-muted">View task and stage reports.</p>
+        <h1>Task Reports</h1>
+
+        <div class="mb-3">
+            <a href="/tasks" class="btn btn-secondary">
+                ← Back to Tasks
+            </a>
+        </div>
+    
+        <table class="table table-bordered table-striped mt-4">
+            <thead>
+                <tr>
+                    <th>Stage ID</th>
+                    <th>Task Item ID</th>
+                    <th>Due Date</th>
+                    <th>Last Updated</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+    
+            <tbody>
+                {% for stage, task in report_rows %}
+                <tr>
+                    <td>{{ stage.id }}</td>
+                    <td>{{ task.id }}</td>
+                    <td>{{ task.due_date }}</td>
+                    <td>{{ stage.last_updated_date }}</td>
+                    <td>{{ stage.status }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/static/js/app.js"></script>
